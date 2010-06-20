@@ -702,10 +702,14 @@ $(document).ready(function() {
 		xkcd.get(null, function(data) {
 			if (data) {
 				xkcd.latest = data;
-				$('#screen').one('cli-ready', function(e) {
-					Terminal.runCommand('cat welcome.txt');
-				});
-				Terminal.runCommand('display '+xkcd.latest.num+'/'+pathFilename(xkcd.latest.img));
+				if (window.location.hash != "") {
+					Terminal.runCommand(window.location.hash.replace(/^#/, ""));
+				} else {
+					$('#screen').one('cli-ready', function(e) {
+						Terminal.runCommand('cat welcome.txt');
+					});
+					Terminal.runCommand('display '+xkcd.latest.num+'/'+pathFilename(xkcd.latest.img));
+				}
 			} else {
 				noData();
 			}
