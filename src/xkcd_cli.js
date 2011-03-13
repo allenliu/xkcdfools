@@ -272,9 +272,7 @@ function backLink(directory) {
 		if (child.type == 'dir') {
 			child.files['.'] = new Link('.', child);
 			child.files['..'] = new Link('..', directory);
-			if (child != directory) {
-				backLink(child);
-			}
+			backLink(child);
 		}
 	}
 }

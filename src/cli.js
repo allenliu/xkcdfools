@@ -420,7 +420,9 @@ var Terminal = {
 		}
 		this.addHistory(cmd);
 		if (this.output) {
-			return this.output.process(this, cmd);
+			this.output.process(this, cmd);
+			this.updateInputDisplay();
+			return;
 		} else {
 			return false;
 		}
