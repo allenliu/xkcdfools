@@ -186,7 +186,41 @@ function linkFile(url) {
 	}};
 }
 
-Filesystem = {
+function Directory(name, files) {
+	this.name = name;
+	this.files = files;
+}
+
+Directory.prototype = {
+	type: 'dir',
+	toString: function() {
+		return this.name;
+	},
+	enter: function() {
+		Terminal.config.prompt = 'guest@console ' + this + ':/$ ';
+		TerminalShell.pwd = this;
+	}
+};
+
+
+function Link(name, link) {
+	this.name = name;
+	this.link = link;
+}
+
+Link.prototype = {
+	type: 'link',
+	toString: function() {
+		return this.name;
+	},
+	enter: function() {
+		Terminal.config.prompt = 'guest@console ' + this.link + ':/$ ';
+		TerminalShell.pwd = this.link;
+	}
+};
+
+
+Filesystem = new Directory('root', {
 	'welcome.txt': {type:'file', read:function(terminal) {
 		terminal.print($('<h4>').text('Welcome to the unixkcd console.'));
 		terminal.print('To navigate the comics, enter "next", "prev", "first", "last", "display", or "random".');
@@ -213,19 +247,55 @@ Filesystem = {
 		], function(num, line) {
 			terminal.print(line);
 		});
-	}}
-};
-Filesystem['blog'] = Filesystem['blag'] = linkFile('http://blag.xkcd.com');
-Filesystem['forums'] = Filesystem['fora'] = linkFile('http://forums.xkcd.com/');
-Filesystem['store'] = linkFile('http://store.xkcd.com/');
-Filesystem['about'] = linkFile('http://xkcd.com/about/');
+	}},
+	'directory': new Directory('directory', {
+		'test.txt': {
+			type:'file',
+			read:function(terminal) {
+				terminal.print('file contents');
+			}
+		},
+		'subdirectory': new Directory('subdirectory', {
+			'test2.txt': {
+				type:'file',
+				read:function(terminal) {
+					terminal.print('more file contents');
+				}
+			}
+		})
+	})
+});
+
+function backLink(directory) {
+	for (file in directory.files) {
+		child = directory.files[file];
+		if (child.type == 'dir') {
+			child.files['.'] = new Link('.', child);
+			child.files['..'] = new Link('..', directory);
+			if (child != directory) {
+				backLink(child);
+			}
+		}
+	}
+}
+
+backLink(Filesystem);
+
+Filesystem.files['.'] = new Link('.', Filesystem);
+Filesystem.files['..'] = new Link('..', Filesystem);
+
+Filesystem.files['blog'] = Filesystem['blag'] = linkFile('http://blag.xkcd.com');
+Filesystem.files['forums'] = Filesystem['fora'] = linkFile('http://forums.xkcd.com/');
+Filesystem.files['store'] = linkFile('http://store.xkcd.com/');
+Filesystem.files['about'] = linkFile('http://xkcd.com/about/');
 TerminalShell.pwd = Filesystem;
+Terminal.config.prompt = 'guest@console ' + TerminalShell.pwd + ':/$ ';
 
 TerminalShell.commands['cd'] = function(terminal, path) {
-	if (path in this.pwd) {
-		if (this.pwd[path].type == 'dir') {
-			this.pwd[path].enter(terminal);
-		} else if (this.pwd[path].type == 'file') {
+	if (path in this.pwd.files) {
+		if (this.pwd.files[path].type == 'dir' || this.pwd.files[path].type == 'link') {
+			this.pwd.files[path].enter(terminal);
+		} else if (this.pwd.files[path].type == 'file') {
 			terminal.print('cd: '+path+': Not a directory');
 		}
 	} else {
@@ -236,7 +306,10 @@ TerminalShell.commands['cd'] = function(terminal, path) {
 TerminalShell.commands['dir'] =
 TerminalShell.commands['ls'] = function(terminal, path) {
 	var name_list = $('<ul>');
-	$.each(this.pwd, function(name, obj) {
+	$.each(this.pwd.files, function(name, obj) {
+		if (name.charAt(0) == '.') {
+			return;
+		}
 		if (obj.type == 'dir') {
 			name += '/';
 		}
@@ -246,10 +319,10 @@ TerminalShell.commands['ls'] = function(terminal, path) {
 };
 
 TerminalShell.commands['cat'] = function(terminal, path) {
-	if (path in this.pwd) {
-		if (this.pwd[path].type == 'file') {
-			this.pwd[path].read(terminal);
-		} else if (this.pwd[path].type == 'dir') {
+	if (path in this.pwd.files) {
+		if (this.pwd.files[path].type == 'file') {
+			this.pwd.files[path].read(terminal);
+		} else if (this.pwd.files[path].type == 'dir') {
 			terminal.print('cat: '+path+': Is a directory');
 		}
 	} else if (pathFilename(path) == 'alt.txt') {
@@ -273,12 +346,12 @@ TerminalShell.commands['rm'] = function(terminal, flags, path) {
 	}
 	if (!path) {
 		terminal.print('rm: missing operand');
-	} else if (path in this.pwd) {
-		if (this.pwd[path].type == 'file') {
-			delete this.pwd[path];
-		} else if (this.pwd[path].type == 'dir') {
+	} else if (path in this.pwd.files) {
+		if (this.pwd.files[path].type == 'file') {
+			delete this.pwd.files[path];
+		} else if (this.pwd.files[path].type == 'dir') {
 			if (/r/.test(flags)) {
-				delete this.pwd[path];
+				delete this.pwd.files[path];
 			} else {
 				terminal.print('rm: cannot remove '+path+': Is a directory');
 			}

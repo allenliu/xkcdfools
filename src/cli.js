@@ -168,7 +168,7 @@ var Terminal = {
 					if (letter == 'w') {
 						this.deleteWord();
 					} else if (letter == 'h') {
-						Terminal.deleteCharacter(false);
+						this.deleteCharacter(false);
 					} else if (letter == 'l') {
 						this.clear();
 					} else if (letter == 'a') {
