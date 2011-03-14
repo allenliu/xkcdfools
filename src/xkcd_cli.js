@@ -351,7 +351,7 @@ TerminalShell.commands['rm'] = function(terminal, flags, path) {
 			if (/r/.test(flags)) {
 				delete this.pwd.files[path];
 			} else {
-				terminal.print('rm: cannot remove '+path+': Is a directory');
+				terminal.print('rm: cannot remove \'' + path + '\': Is a directory');
 			}
 		}
 	} else if (flags == '-rf' && path == '/') {
@@ -360,8 +360,45 @@ TerminalShell.commands['rm'] = function(terminal, flags, path) {
 		} else {
 			terminal.print('rm: cannot remove /: Permission denied');
 		}
+	} else {
+		terminal.print('rm: cannot remove \'' + path + '\': No such file or directory');
 	}
 };
+
+TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
+	if (flags && flags[0] != '-') {
+		path = flags;
+	}
+	if (!path) {
+		terminal.print('mkdir: missing operand');
+	} else if (/p/.test(flags)) {
+		var arr = path.split('/');
+		var ptr = this.pwd;
+		for (dir in arr) {
+			if (!ptr.files[arr[dir]]) {
+				ptr.files[arr[dir]] = new Directory(arr[dir], {});
+			}
+			ptr.files[arr[dir]].files['.'] = new Link('.', ptr.files[arr[dir]]);
+			ptr.files[arr[dir]].files['..'] = new Link('..', ptr);
+			ptr = ptr.files[arr[dir]];
+		}
+	} else {
+		var arr = path.split('/');
+		var ptr = this.pwd;
+		for (dir in arr) {
+			if ((!ptr.files[arr[dir]] && arr[dir] == arr[arr.length - 1])) {
+				ptr.files[arr[dir]] = new Directory(arr[dir], {});
+			} else if (!ptr.files[arr[dir]]) {
+				terminal.print('mkdir: cannot create directory \'' + path + '\': No such file or directory');
+				return;
+			}
+			ptr.files[arr[dir]].files['.'] = new Link('.', ptr.files[arr[dir]]);
+			ptr.files[arr[dir]].files['..'] = new Link('..', ptr);
+			ptr = ptr.files[arr[dir]];
+		}
+	}
+}
+
 
 TerminalShell.commands['cheat'] = function(terminal) {
 	terminal.print($('<a>').text('*** FREE SHIPPING ENABLED ***').attr('href', 'http://store.xkcd.com/'));
