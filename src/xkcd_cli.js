@@ -341,6 +341,7 @@ TerminalShell.commands['cat'] = function(terminal, path) {
 TerminalShell.commands['rm'] = function(terminal, flags, path) {
 	if (flags && flags[0] != '-') {
 		path = flags;
+		flags = '';
 	}
 	if (!path) {
 		terminal.print('rm: missing operand');
@@ -368,6 +369,7 @@ TerminalShell.commands['rm'] = function(terminal, flags, path) {
 TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
 	if (flags && flags[0] != '-') {
 		path = flags;
+		flags = '';
 	}
 	if (!path) {
 		terminal.print('mkdir: missing operand');
@@ -386,7 +388,7 @@ TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
 		var arr = path.split('/');
 		var ptr = this.pwd;
 		for (dir in arr) {
-			if ((!ptr.files[arr[dir]] && arr[dir] == arr[arr.length - 1])) {
+			if (!ptr.files[arr[dir]] && arr[dir] == arr[arr.length - 1]) {
 				ptr.files[arr[dir]] = new Directory(arr[dir], {});
 			} else if (!ptr.files[arr[dir]]) {
 				terminal.print('mkdir: cannot create directory \'' + path + '\': No such file or directory');
@@ -399,6 +401,34 @@ TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
 	}
 }
 
+
+TerminalShell.commands['rmdir'] = function(terminal, flags, path) {
+	if (flags && flags[0] != '-') {
+		path = flags;
+		flags = '';
+	}
+	if (!path) {
+		terminal.print('rmdir: missing operand');
+	} else if (/p/.test(flags)) {
+		// unimplemented
+	} else {
+		var arr = path.split('/');
+		var ptr = this.pwd;
+		for (dir in arr) {
+			if (!ptr.files[arr[dir]]) {
+				terminal.print('rmdir: failed to remove \'' + path + '\': No such file or directory');
+				return;
+			} else if (arr[dir] == arr[arr.length - 1] && Object.size(ptr.files[arr[dir]].files) != 2) {
+				terminal.print('rmdir: failed to remove \'' + path + '\': Directory not empty');
+				return;
+			} else if (arr[dir] == arr[arr.length - 1]) {
+				delete ptr.files[arr[dir]];
+				return;
+			}
+			ptr = ptr.files[arr[dir]];
+		}
+	}
+};
 
 TerminalShell.commands['cheat'] = function(terminal) {
 	terminal.print($('<a>').text('*** FREE SHIPPING ENABLED ***').attr('href', 'http://store.xkcd.com/'));
