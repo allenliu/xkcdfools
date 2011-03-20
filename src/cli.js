@@ -58,6 +58,7 @@ Object.size = function(obj) {
     return size;
 };
 
+
 var TerminalShell = {
 	commands: {
 		help: function help(terminal) {
