@@ -303,7 +303,7 @@ TerminalShell.commands['ls'] = function(terminal, flags) {
 	}
 	for (dir in this.pwd.files) {
 		if (/a/.test(flags) || dir.charAt(0) != '.') {
-			name_list.append($('<li>').text(dir));
+			name_list.append($('<li>').addClass(this.pwd.files[dir].type).text(dir));
 		}
 	}
 	terminal.print(name_list);
