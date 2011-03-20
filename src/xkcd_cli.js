@@ -186,14 +186,14 @@ function linkFile(url) {
 	}};
 }
 
-function Directory(name, files) {
+TerminalShell.Directory = function(name, files) {
 	this.toString = function() {
 		return name;
 	};
 	this.files = files;
-}
+};
 
-Directory.prototype = {
+TerminalShell.Directory.prototype = {
 	type: 'dir',
 	addDir: function(dir) {
 		dir.parent = this;
@@ -206,19 +206,19 @@ Directory.prototype = {
 };
 
 
-function TextFile(name, contents) {
+TerminalShell.TextFile = function(name, contents) {
 	this.toString = function() {
 		return name;
 	};
 	this.contents = contents;
-}
+};
 
-TextFile.prototype = {
+TerminalShell.TextFile.prototype = {
 	type: 'file'
 };
 
 
-Filesystem = new Directory('~', {
+Filesystem = new TerminalShell.Directory('~', {
 	'welcome.txt': {type:'file', read:function(terminal) {
 		terminal.print($('<h4>').text('Welcome to the unixkcd console.'));
 		terminal.print('To navigate the comics, enter "next", "prev", "first", "last", "display", or "random".');
@@ -372,7 +372,7 @@ TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
 		for (i in arr) {
 			var dir = arr[i];
 			if (!ptr.files[dir]) {
-				ptr.addDir(new Directory(dir, {}));
+				ptr.addDir(new this.Directory(dir, {}));
 			}
 			ptr = ptr.files[dir];
 		}
@@ -382,7 +382,7 @@ TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
 		for (i in arr) {
 			var dir = arr[i];
 			if (!ptr.files[dir] && i == arr.length - 1) {
-				ptr.addDir(new Directory(dir, {}));
+				ptr.addDir(new this.Directory(dir, {}));
 			} else if (!ptr.files[dir]) {
 				terminal.print('mkdir: cannot create directory \'' + path + '\': No such file or directory');
 				return;
@@ -403,7 +403,23 @@ TerminalShell.commands['rmdir'] = function(terminal, flags, path) {
 	if (!path) {
 		terminal.print('rmdir: missing operand');
 	} else if (/p/.test(flags)) {
-		// unimplemented
+		(function(ptr, arr) {
+			if (arr.length == 0) {
+				return true;
+			} else if (ptr.files[arr[0]]) {
+				var flag = arguments.callee(ptr.files[arr[0]], arr.slice(1))
+				if (flag && Object.size(ptr.files[arr[0]].files) != 0) {
+					terminal.print('rmdir: failed to remove \'' + path + '\': Directory not empty');
+					return false;
+				} else if (flag) {
+					delete ptr.files[arr[0]];
+					return true;
+				}
+			} else {
+				terminal.print('rmdir: failed to remove \'' + path + '\': No such file or directory');
+				return false;
+			}
+		})(this.pwd, path.split('/'));
 	} else {
 		var arr = path.split('/');
 		var ptr = this.pwd;
