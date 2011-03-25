@@ -250,8 +250,8 @@ Filesystem = new TerminalShell.Directory('~', {
 
 Filesystem.parent = Filesystem;
 
-Filesystem.files['blog'] = Filesystem['blag'] = linkFile('http://blag.xkcd.com');
-Filesystem.files['forums'] = Filesystem['fora'] = linkFile('http://forums.xkcd.com/');
+Filesystem.files['blog'] = Filesystem.files['blag'] = linkFile('http://blag.xkcd.com');
+Filesystem.files['forums'] = Filesystem.files['fora'] = linkFile('http://forums.xkcd.com/');
 Filesystem.files['store'] = linkFile('http://store.xkcd.com/');
 Filesystem.files['about'] = linkFile('http://xkcd.com/about/');
 
@@ -657,6 +657,10 @@ TerminalShell.commands['sleep'] = function(terminal, duration) {
 TerminalShell.commands['help'] = TerminalShell.commands['halp'] = function(terminal) {
 	terminal.print('That would be cheating!');
 }; 
+
+TerminalShell.tabSuggestions = function() {
+	return $.extend({}, this.commands, this.pwd.files);
+};
 
 TerminalShell.fallback = function(terminal, cmd) {
 	oneliners = {
