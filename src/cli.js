@@ -82,7 +82,7 @@ var TerminalShell = {
 			$.each(this.filters, $.proxy(function(index, filter) {
 				cmd = filter.call(this, terminal, cmd);
 			}, this));
-			var cmd_args = cmd.split(' ');
+			var cmd_args = cmd.split(/ +/);
 			var cmd_name = cmd_args.shift();
 			cmd_args.unshift(terminal);
 			if (this.commands.hasOwnProperty(cmd_name)) {
@@ -104,7 +104,7 @@ var TerminalShell = {
 		}
 		var suggestions = [];
 		$.each(this.tabSuggestions(), function(name) {
-			if(segment == name.substr(0,segment.length)) {
+			if(segment == name.substr(0, segment.length)) {
 				suggestions.push(name);
 			}
 		});
