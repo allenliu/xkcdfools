@@ -296,17 +296,27 @@ TerminalShell.commands['cd'] = function(terminal, path) {
 
 TerminalShell.commands['dir'] =
 TerminalShell.commands['ls'] = function(terminal, flags) {
-	var name_list = $('<ul>');
+	var arr = [];
 	if (/a/.test(flags)) {
-		name_list.append($('<li>').text('.'));
-		name_list.append($('<li>').text('..'));
+		arr.push($('<li>').addClass('dir').text('.'));
+		arr.push($('<li>').addClass('dir').text('..'));
 	}
 	for (dir in this.pwd.files) {
 		if (/a/.test(flags) || dir.charAt(0) != '.') {
-			name_list.append($('<li>').addClass(this.pwd.files[dir].type).text(dir));
+			arr.push($('<li>').addClass(this.pwd.files[dir].type).text(dir));
 		}
 	}
-	terminal.print(name_list);
+	terminal.print(arr);
+	arr.sort(function(a, b) {
+		var compA = $(a).text().toLowerCase();
+		var compB = $(b).text().toLowerCase();
+		return (compA < compB) ? -1 : (compA > compB) ? 1 : 0;
+	});
+	var file_list = $('<ul>');
+	$.each(arr, function(index, value) {
+		file_list.append(value);
+	});
+	terminal.print(file_list);
 };
 
 TerminalShell.commands['cat'] = function(terminal, path) {
@@ -407,6 +417,10 @@ TerminalShell.commands['rmdir'] = function(terminal, flags, path) {
 			if (arr.length == 0) {
 				return true;
 			} else if (ptr.files[arr[0]]) {
+				if (ptr.files[arr[0]].type != 'dir') {
+					terminal.print('rmdir: failed to remove \'' + path + '\': Not a directory');
+					return false;
+				}
 				var flag = arguments.callee(ptr.files[arr[0]], arr.slice(1))
 				if (flag && Object.size(ptr.files[arr[0]].files) != 0) {
 					terminal.print('rmdir: failed to remove \'' + path + '\': Directory not empty');
@@ -427,6 +441,9 @@ TerminalShell.commands['rmdir'] = function(terminal, flags, path) {
 			var dir = arr[i];
 			if (!ptr.files[dir]) {
 				terminal.print('rmdir: failed to remove \'' + path + '\': No such file or directory');
+				return;
+			} else if (ptr.files[dir].type != 'dir') {
+				terminal.print('rmdir: failed to remove \'' + path + '\': Not a directory');
 				return;
 			} else if (i == arr.length - 1 && Object.size(ptr.files[dir].files) != 0) {
 				terminal.print('rmdir: failed to remove \'' + path + '\': Directory not empty');
