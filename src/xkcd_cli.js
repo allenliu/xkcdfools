@@ -306,7 +306,6 @@ TerminalShell.commands['ls'] = function(terminal, flags) {
 			arr.push($('<li>').addClass(this.pwd.files[dir].type).text(dir));
 		}
 	}
-	terminal.print(arr);
 	arr.sort(function(a, b) {
 		var compA = $(a).text().toLowerCase();
 		var compB = $(b).text().toLowerCase();
@@ -383,6 +382,9 @@ TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
 			var dir = arr[i];
 			if (!ptr.files[dir]) {
 				ptr.addDir(new this.Directory(dir, {}));
+			} else if (ptr.files[dir].type != 'dir') {
+				terminal.print('mkdir: cannot create directory \'' + path + '\': Not a directory');
+				return;
 			}
 			ptr = ptr.files[dir];
 		}
@@ -398,6 +400,10 @@ TerminalShell.commands['mkdir'] = function(terminal, flags, path) {
 				return;
 			} else if (dir == arr[arr.length - 1]) {
 				terminal.print('mkdir: cannot create directory \'' + path + '\': File exists');
+				return;
+			} else if (ptr.files[dir].type != 'dir') {
+				terminal.print('mkdir: cannot create directory \'' + path + '\': Not a directory');
+				return;
 			}
 			ptr = ptr.files[dir];
 		}
